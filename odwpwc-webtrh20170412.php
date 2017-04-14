@@ -87,7 +87,32 @@ class odwpcp_webtrh20170412 {
      * @since 0.0.1
      */
     public static function load_plugin() {
-        // ...
+        add_action( 'woocommerce_register_form_start', array( __CLASS__, 'customize_wc_register_form' ) );
+    }
+
+    /**
+     * Customize WooCommerce registration form.
+     */
+    public static function customize_wc_register_form() {
+?>
+<p class="form-row form-row-wide">
+    <label for="reg_user_role"><?php _e( 'Uživatelská role', self::SLUG ); ?><span class="required">*</span></label>
+    <select name="user_role" id="reg_user_role">
+        <option value="zakaznik" selected><?php _e( 'Zákazník', self::SLUG ); ?></option>
+        <option value="kosmetolog"><?php _e( 'Kosmetolog', self::SLUG ); ?></option>
+        <option value="lekar"><?php _e( 'Lékař', self::SLUG ); ?></option>
+    </select>
+</p>
+<p class="form-row form-row-first">
+    <label for="reg_billing_first_name"><?php _e( 'Křestní jméno', self::SLUG ); ?><span class="required">*</span></label>
+    <input type="text" class="input-text" name="billing_first_name" id="reg_billing_first_name" value="">
+</p>
+<p class="form-row form-row-last">
+    <label for="reg_billing_last_name"><?php _e( 'Příjmení', self::SLUG ); ?><span class="required">*</span></label>
+    <input type="text" class="input-text" name="billing_last_name" id="reg_billing_last_name" value="">
+</p>
+<div class="clear"></div>
+<?php
     }
 
     /**
