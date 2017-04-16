@@ -17,6 +17,12 @@
  * @link https://github.com/ondrejd/odwpwc-webtrh20170412 for the canonical source repository
  * @license https://www.gnu.org/licenses/gpl-3.0.en.html GNU General Public License 3.0
  * @package odwpwc-webtrh20170412
+ *
+ * @todo Finish customizations for WooCommerce registration form.
+ * @todo Enable uploading files.
+ * @todo Send registration email also to selected administrators.
+ * @todo If license is attached to the user than it should be send to the administrator in the email.
+ * @todo Add user preferences.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -87,32 +93,102 @@ class odwpcp_webtrh20170412 {
      * @since 0.0.1
      */
     public static function load_plugin() {
-        add_action( 'woocommerce_register_form_start', array( __CLASS__, 'customize_wc_register_form' ) );
+        add_action( 'woocommerce_register_form_start', array( __CLASS__, 'wc_register_form_start' ) );
+        add_action( 'woocommerce_register_form', array( __CLASS__, 'wc_register_form' ) );
+        add_action( 'woocommerce_register_form_end', array( __CLASS__, 'wc_register_form_end' ) );
+        add_action( 'woocommerce_register_post', array( __CLASS__, 'wc_validate_register_form' ), 10, 3 );
+    }
+
+    /**
+     * Customize WooCommerce registration form from the begining.
+     */
+    public static function wc_register_form_start() {
+?>
+<p class="woocomerce-form-row woocomerce-form-row--wide form-row form-row-wide">
+    <label for="reg_user_role"><?php _e( 'Uživatelská role', self::SLUG ) ?><span class="required">*</span></label>
+    <select name="user_role" id="reg_user_role">
+        <option value="zakaznik" selected><?php _e( 'Zákazník', self::SLUG ) ?></option>
+        <option value="kosmetolog"><?php _e( 'Kosmetolog', self::SLUG ) ?></option>
+        <option value="lekar"><?php _e( 'Lékař', self::SLUG ) ?></option>
+    </select>
+</p>
+<p class="woocomerce-form-row form-row form-row-first">
+    <label for="reg_billing_first_name"><?php _e( 'Křestní jméno', self::SLUG ) ?><span class="required">*</span></label>
+    <input type="text" class="input-text" name="billing_first_name" id="reg_billing_first_name" value="">
+</p>
+<p class="woocomerce-form-row form-row form-row-last">
+    <label for="reg_billing_last_name"><?php _e( 'Příjmení', self::SLUG ) ?><span class="required">*</span></label>
+    <input type="text" class="input-text" name="billing_last_name" id="reg_billing_last_name" value="">
+</p>
+<div class="clear"></div>
+<?php
     }
 
     /**
      * Customize WooCommerce registration form.
      */
-    public static function customize_wc_register_form() {
+    public static function wc_register_form() {
 ?>
-<p class="form-row form-row-wide">
-    <label for="reg_user_role"><?php _e( 'Uživatelská role', self::SLUG ); ?><span class="required">*</span></label>
-    <select name="user_role" id="reg_user_role">
-        <option value="zakaznik" selected><?php _e( 'Zákazník', self::SLUG ); ?></option>
-        <option value="kosmetolog"><?php _e( 'Kosmetolog', self::SLUG ); ?></option>
-        <option value="lekar"><?php _e( 'Lékař', self::SLUG ); ?></option>
-    </select>
+<p id="reg_license_row" class="woocomerce-form-row woocomerce-form-row--wide form-row form-row-wide">
+    <label for="reg_license">
+        <span><?php _e( 'Licence', self::SLUG ) ?><span class="required">*</span></span>
+        <input type="file" id="reg_license" name="license">
+    </label>
 </p>
-<p class="form-row form-row-first">
-    <label for="reg_billing_first_name"><?php _e( 'Křestní jméno', self::SLUG ); ?><span class="required">*</span></label>
-    <input type="text" class="input-text" name="billing_first_name" id="reg_billing_first_name" value="">
-</p>
-<p class="form-row form-row-last">
-    <label for="reg_billing_last_name"><?php _e( 'Příjmení', self::SLUG ); ?><span class="required">*</span></label>
-    <input type="text" class="input-text" name="billing_last_name" id="reg_billing_last_name" value="">
-</p>
-<div class="clear"></div>
+<noscript><p class="woocomerce-form-row woocomerce-form-row--wide form-row form-row-wide description">
+    <?php _e( 'Licenci nahrávejte povinně jen v případě, že jste zvolili uživatelskou roli <strong>kosmetolog</strong> nebo <strong>lékař</strong>.', self::SLUG ) ?>
+</p></noscript>
 <?php
+    }
+
+    /**comerce-form-row--wide form-row form-row-wide description">
+    <?php _e( 'Licenci nahrávejte povinně jen v p
+     * Customize WooCommerce registration form at the end.
+     */
+    public static function wc_register_form_end() {
+?>
+<script type="text/javascript">
+jQuery( document ).ready( function() {
+    function toggle_license() {
+        if ( jQuery( "#reg_user_role" ).val() != "zakaznik" ) {
+            jQuery( "#reg_license_row" ).show();
+        } else {
+            jQuery( "#reg_license_row" ).hide();
+        }
+    }
+
+    jQuery( "#reg_user_role" ).change( toggle_license );
+    toggle_license();
+});
+</script>
+<?php
+    }
+
+    /**
+     * Validate our customizations of WooCommerce registration form.
+     * @param string $username
+     * @param string $email
+     * @param WP_Error $errors
+     * @return WP_Error Validation errors.
+     */
+    public static function wc_validate_register_form( $username, $email, WP_Error $errors ) {
+        $first_name = filter_input( INPUT_POST, 'billing_first_name' );
+        $last_name  = filter_input( INPUT_POST, 'billing_last_name' );
+
+        if ( empty( $first_name ) ) {
+        //if ( isset( $_POST['billing_first_name'] ) && empty( $_POST['billing_first_name'] ) ) {
+            $errors->add( 'billing_first_name_error', __( '<strong>Chyba</strong>: Křestní jméno je povinné!', self::SLUG ) );
+        }
+
+        if ( empty( $last_name ) ) {
+        //if ( isset( $_POST['billing_last_name'] ) && empty( $_POST['billing_last_name'] ) ) {
+            $errors->add( 'billing_last_name_error', __( '<strong>Chyba</strong>: Příjmení je povinné!.', self::SLUG ) );
+        }
+
+        // TODO Save user role for new user.
+        // TODO Check if "license" is uploaded and it is JPG (max. 5MB).
+
+        return $errors;
     }
 
     /**
@@ -126,7 +202,7 @@ class odwpcp_webtrh20170412 {
             return;
         }
 
-        // Nothing to do...
+        // Nothing to do...<?php _e<?php _e
     }
 
     /**
