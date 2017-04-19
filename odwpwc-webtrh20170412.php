@@ -52,6 +52,19 @@ class odwpcp_webtrh20170412 {
      */
     const UPLOAD = 'licenses';
 
+    const ROLE_CUSTOMER = 'zakaznik';
+    const ROLE_COSMETOLOGIST = 'kosmetolog';
+    const ROLE_PHYSICIAN = 'lekar';
+
+    /**
+     * @const array
+     */
+    const AVAILABLE_ROLES = [
+            self::ROLE_CUSTOMER,
+            self::ROLE_COSMETOLOGIST,
+            self::ROLE_PHYSICIAN,
+    ];
+
     /**
      * Activates the plugin.
      * @return void
@@ -82,8 +95,8 @@ class odwpcp_webtrh20170412 {
      * @return void
      */
     public static function init() {
-        register_activation_hook( self::FILE, [__CLASS__, 'activate'] );
-        register_uninstall_hook( self::FILE, [__CLASS__, 'uninstall'] );
+        register_activation_hook( __FILE__, [__CLASS__, 'activate'] );
+        register_uninstall_hook( __FILE__, [__CLASS__, 'uninstall'] );
         add_action( 'init', [__CLASS__, 'load_plugin_textdomain'] );
         add_action( 'plugins_loaded', [__CLASS__, 'load_plugin'] );
     }
@@ -120,24 +133,28 @@ class odwpcp_webtrh20170412 {
 
     /**
      * Customize WooCommerce registration form from the begining.
+     * @todo Move HTML to an external file!
      */
     public static function wc_register_form_start() {
+        $role  = filter_input( INPUT_POST, 'user_role' );
+        $fname = filter_input( INPUT_POST, 'billing_first_name' );
+        $lname = filter_input( INPUT_POST, 'billing_last_name' );
 ?>
 <p class="woocomerce-form-row woocomerce-form-row--wide form-row form-row-wide">
     <label for="reg_user_role"><?php _e( 'Uživatelská role', self::SLUG ) ?><span class="required">*</span></label>
     <select name="user_role" id="reg_user_role">
-        <option value="zakaznik" selected><?php _e( 'Zákazník', self::SLUG ) ?></option>
-        <option value="kosmetolog"><?php _e( 'Kosmetolog', self::SLUG ) ?></option>
-        <option value="lekar"><?php _e( 'Lékař', self::SLUG ) ?></option>
+        <option value="<?= self::ROLE_CUSTOMER ?>" <?php selected( $role, self::ROLE_CUSTOMER ) ?>><?php _e( 'Zákazník', self::SLUG ) ?></option>
+        <option value="<?= self::ROLE_COSMETOLOGIST ?>" <?php selected( $role, self::ROLE_COSMETOLOGIST ) ?>><?php _e( 'Kosmetolog', self::SLUG ) ?></option>
+        <option value="<?= self::ROLE_PHYSICIAN ?>" <?php selected( $role, self::ROLE_PHYSICIAN ) ?>><?php _e( 'Lékař', self::SLUG ) ?></option>
     </select>
 </p>
 <p class="woocomerce-form-row form-row form-row-first">
     <label for="reg_billing_first_name"><?php _e( 'Křestní jméno', self::SLUG ) ?><span class="required">*</span></label>
-    <input type="text" class="input-text" name="billing_first_name" id="reg_billing_first_name" value="">
+    <input type="text" class="input-text" name="billing_first_name" id="reg_billing_first_name" value="<?= $fname ?>">
 </p>
 <p class="woocomerce-form-row form-row form-row-last">
     <label for="reg_billing_last_name"><?php _e( 'Příjmení', self::SLUG ) ?><span class="required">*</span></label>
-    <input type="text" class="input-text" name="billing_last_name" id="reg_billing_last_name" value="">
+    <input type="text" class="input-text" name="billing_last_name" id="reg_billing_last_name" value="<?= $lname ?>">
 </p>
 <div class="clear"></div>
 <?php
@@ -145,13 +162,15 @@ class odwpcp_webtrh20170412 {
 
     /**
      * Customize WooCommerce registration form.
+     * @todo Move HTML to an external file!
      */
     public static function wc_register_form() {
 ?>
+<input type="hidden" name="license" id="license">
 <p class="woocomerce-form-row woocomerce-form-row--wide form-row form-row-wide reg-license-row">
     <label for="reg_license">
         <span><?php _e( 'Licence', self::SLUG ) ?><span class="required">*</span></span>
-        <input type="file" id="reg_license" name="license">
+        <input type="file" id="reg_license" name="license_file">
     </label>
 </p>
 <p class="description reg-license-row"><?php _e( 'Nahrávejte soubory typu JPG/JPEG do velikosti 5 Mb.', self::SLUG ) ?></p>
@@ -163,13 +182,17 @@ class odwpcp_webtrh20170412 {
 
     /**
      * Customize WooCommerce registration form at the end.
+     * @todo Implement maximum allowed file size as a plugin's option.
+     * @todo Implement allowed file extensions as a plugin's option.
+     * @todo Print errors directly inside the form not as an alerts!
+     * @todo Move JavaScript to an external file!
      */
     public static function wc_register_form_end() {
 ?>
 <script type="text/javascript">
 jQuery( document ).ready( function(){
     function toggle_license() {
-        if ( jQuery( "#reg_user_role" ).val() != "zakaznik" ) {
+        if ( jQuery( "#reg_user_role" ).val() != "<?= self::ROLE_CUSTOMER ?>" ) {
             jQuery( ".reg-license-row" ).show();
         } else {
             jQuery( ".reg-license-row" ).hide();
@@ -180,14 +203,22 @@ jQuery( document ).ready( function(){
     toggle_license();
 
     // Pre-validate file before uploading
-    /*$( "form" ).submit( function( e ){
-        var ext = $( "#reg_license" ).val().split( "." ).pop().toLowerCase();
-        if ( ! ( $( "#reg_license" )[0].files[0].size < 5242830 && ext == 'jpg')) {
-            //Prevent default and display error
+    jQuery( "form" ).submit( function( e ) {
+        if ( jQuery( "#reg_user_role" ).val() == "<?= self::ROLE_CUSTOMER ?>" ) {
+            return true;
+        }
+        var file = jQuery( "#reg_license" ).val();
+        if ( file.empty() || ! file ) {
+            alert( "<?php _e( 'Nevložili jste soubor s licencí!', self::SLUG ) ?>" );
+        }
+        var ext = file.split( "." ).pop().toLowerCase();
+        if ( ! ( jQuery( "#reg_license" )[0].files[0].size < 5242830 && ext == "jpg")) {
+            // Prevent default and display error
             alert( "<?php _e( 'Soubor je špatného typu nebo je příliš veliký!', self::SLUG ) ?>" );
             e.preventDefault();
         }
-    } );*/
+        jQuery( "#license" ).val( file );
+    } );
 } );
 </script>
 <?php
@@ -205,38 +236,48 @@ jQuery( document ).ready( function(){
         $first_name = filter_input( INPUT_POST, 'billing_first_name' );
         $last_name  = filter_input( INPUT_POST, 'billing_last_name' );
 
-        if ( ! in_array( $user_role, ['zakaznik', 'kosmetolog', 'lekar'] ) ) {
-            $errors->add( 'user_role_error', __( '<strong>Chyba</strong>: Musíte si zvolit odpovídající uživatelskou roli!.', self::SLUG ) );
+        if ( ! in_array( $user_role, self::AVAILABLE_ROLES ) ) {
+            $errors->add( 'user_role_error', __( 'Musíte si zvolit odpovídající uživatelskou roli!.', self::SLUG ) );
         }
 
         if ( empty( $first_name ) ) {
-            $errors->add( 'billing_first_name_error', __( '<strong>Chyba</strong>: Křestní jméno je povinné!', self::SLUG ) );
+            $errors->add( 'billing_first_name_error', __( 'Křestní jméno je povinné!', self::SLUG ) );
         }
 
         if ( empty( $last_name ) ) {
-            $errors->add( 'billing_last_name_error', __( '<strong>Chyba</strong>: Příjmení je povinné!.', self::SLUG ) );
+            $errors->add( 'billing_last_name_error', __( 'Příjmení je povinné!.', self::SLUG ) );
         }
 
         // TODO Check if "license" is uploaded and it is JPG (max. 5MB).
-        /*if ( in_array( $user_role, ['kosmetolog', 'lekar'] ) && $_FILES ) {
+        $roles = [ self::ROLE_COSMETOLOGIST, self::ROLE_PHYSICIAN ];
+        if ( in_array( $user_role, $roles ) && $_FILES ) {
             require_once( ABSPATH . 'wp-admin/includes/image.php' );
             require_once( ABSPATH . 'wp-admin/includes/file.php' );
             require_once( ABSPATH . 'wp-admin/includes/media.php' );
 
-            foreach ($_FILES as $file => $array) {
+            foreach ($_FILES as $file => $file_arr) {
                 $img_post_id = media_handler_upload( $file );
 
                 if ( is_wp_error( $img_post_id ) ) {
-                    $errors->add( 'license_error', __( '<strong>Chyba</strong>: Při nahrávání souboru s licencí nastala chyba "'.$img_post_id->get_error_message().'"!.', self::SLUG ) );
+                    $errors->add(
+                        'license_error',
+                        sprintf(
+                            __( 'Při nahrávání souboru s licencí nastala chyba "%s"!.', self::SLUG ),
+                            $img_post_id->get_error_message()
+                        )
+                    );
                 } else {
                     // XXX self::license_img_post_id = $img_post_id;
                     // $image_post_id now holds the post ID of an attachment that is your uploaded file
                 }
             }
         }
-        else if ( in_array( $user_role, ['kosmetolog', 'lekar'] ) && ! $_FILES ) {
-            $errors->add( 'license_error', __( '<strong>Chyba</strong>: Musíte nahrát soubor s licencí!.', self::SLUG ) );
-        }*/
+        else if ( in_array( $user_role, $roles ) && ! $_FILES ) {
+            $errors->add(
+                'license_error',
+                __( 'Musíte nahrát soubor s licencí!.', self::SLUG )
+            );
+        }
 
         return $errors;
     }
