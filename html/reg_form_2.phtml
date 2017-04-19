@@ -1,1 +1,11 @@
-
+<input type="hidden" name="license" id="license">
+<p class="woocomerce-form-row woocomerce-form-row--wide form-row form-row-wide reg-license-row">
+    <label for="reg_license">
+        <span><?php _e( 'Licence', odwpcp_webtrh20170412::SLUG ) ?><span class="required">*</span></span>
+        <input type="file" id="reg_license" name="license_file">
+    </label>
+</p>
+<p class="description reg-license-row"><?php _e( 'Nahrávejte soubory typu JPG/JPEG do velikosti 5 Mb.', odwpcp_webtrh20170412::SLUG ) ?></p>
+<noscript><p class="woocomerce-form-row woocomerce-form-row--wide form-row form-row-wide description">
+    <?php _e( 'Licenci nahrávejte povinně jen v případě, že jste zvolili uživatelskou roli <strong>kosmetolog</strong> nebo <strong>lékař</strong>.', odwpcp_webtrh20170412::SLUG ) ?>
+</p></noscript>

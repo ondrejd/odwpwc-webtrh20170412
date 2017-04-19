@@ -1,1 +1,17 @@
-
+<p class="woocomerce-form-row woocomerce-form-row--wide form-row form-row-wide">
+    <label for="reg_user_role"><?php _e( 'Uživatelská role', odwpcp_webtrh20170412::SLUG ) ?><span class="required">*</span></label>
+    <select name="user_role" id="reg_user_role">
+        <option value="<?= odwpcp_webtrh20170412::ROLE_CUSTOMER ?>" <?php selected( $role, odwpcp_webtrh20170412::ROLE_CUSTOMER ) ?>><?php _e( 'Zákazník', odwpcp_webtrh20170412::SLUG ) ?></option>
+        <option value="<?= odwpcp_webtrh20170412::ROLE_COSMETOLOGIST ?>" <?php selected( $role, odwpcp_webtrh20170412::ROLE_COSMETOLOGIST ) ?>><?php _e( 'Kosmetolog', odwpcp_webtrh20170412::SLUG ) ?></option>
+        <option value="<?= odwpcp_webtrh20170412::ROLE_PHYSICIAN ?>" <?php selected( $role, odwpcp_webtrh20170412::ROLE_PHYSICIAN ) ?>><?php _e( 'Lékař', odwpcp_webtrh20170412::SLUG ) ?></option>
+    </select>
+</p>
+<p class="woocomerce-form-row form-row form-row-first">
+    <label for="reg_billing_first_name"><?php _e( 'Křestní jméno', odwpcp_webtrh20170412::SLUG ) ?><span class="required">*</span></label>
+    <input type="text" class="input-text" name="billing_first_name" id="reg_billing_first_name" value="<?= $fname ?>">
+</p>
+<p class="woocomerce-form-row form-row form-row-last">
+    <label for="reg_billing_last_name"><?php _e( 'Příjmení', odwpcp_webtrh20170412::SLUG ) ?><span class="required">*</span></label>
+    <input type="text" class="input-text" name="billing_last_name" id="reg_billing_last_name" value="<?= $lname ?>">
+</p>
+<div class="clear"></div>

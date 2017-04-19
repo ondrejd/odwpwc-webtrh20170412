@@ -133,51 +133,24 @@ class odwpcp_webtrh20170412 {
 
     /**
      * Customize WooCommerce registration form from the begining.
-     * @todo Move HTML to an external file!
      */
     public static function wc_register_form_start() {
         $role  = filter_input( INPUT_POST, 'user_role' );
         $fname = filter_input( INPUT_POST, 'billing_first_name' );
         $lname = filter_input( INPUT_POST, 'billing_last_name' );
-?>
-<p class="woocomerce-form-row woocomerce-form-row--wide form-row form-row-wide">
-    <label for="reg_user_role"><?php _e( 'Uživatelská role', self::SLUG ) ?><span class="required">*</span></label>
-    <select name="user_role" id="reg_user_role">
-        <option value="<?= self::ROLE_CUSTOMER ?>" <?php selected( $role, self::ROLE_CUSTOMER ) ?>><?php _e( 'Zákazník', self::SLUG ) ?></option>
-        <option value="<?= self::ROLE_COSMETOLOGIST ?>" <?php selected( $role, self::ROLE_COSMETOLOGIST ) ?>><?php _e( 'Kosmetolog', self::SLUG ) ?></option>
-        <option value="<?= self::ROLE_PHYSICIAN ?>" <?php selected( $role, self::ROLE_PHYSICIAN ) ?>><?php _e( 'Lékař', self::SLUG ) ?></option>
-    </select>
-</p>
-<p class="woocomerce-form-row form-row form-row-first">
-    <label for="reg_billing_first_name"><?php _e( 'Křestní jméno', self::SLUG ) ?><span class="required">*</span></label>
-    <input type="text" class="input-text" name="billing_first_name" id="reg_billing_first_name" value="<?= $fname ?>">
-</p>
-<p class="woocomerce-form-row form-row form-row-last">
-    <label for="reg_billing_last_name"><?php _e( 'Příjmení', self::SLUG ) ?><span class="required">*</span></label>
-    <input type="text" class="input-text" name="billing_last_name" id="reg_billing_last_name" value="<?= $lname ?>">
-</p>
-<div class="clear"></div>
-<?php
+
+        ob_start( function() {} );
+        include_once( dirname( __FILE__ ) . '/html/reg_form_1.phtml' );
+        echo ob_get_flush();
     }
 
     /**
      * Customize WooCommerce registration form.
-     * @todo Move HTML to an external file!
      */
     public static function wc_register_form() {
-?>
-<input type="hidden" name="license" id="license">
-<p class="woocomerce-form-row woocomerce-form-row--wide form-row form-row-wide reg-license-row">
-    <label for="reg_license">
-        <span><?php _e( 'Licence', self::SLUG ) ?><span class="required">*</span></span>
-        <input type="file" id="reg_license" name="license_file">
-    </label>
-</p>
-<p class="description reg-license-row"><?php _e( 'Nahrávejte soubory typu JPG/JPEG do velikosti 5 Mb.', self::SLUG ) ?></p>
-<noscript><p class="woocomerce-form-row woocomerce-form-row--wide form-row form-row-wide description">
-    <?php _e( 'Licenci nahrávejte povinně jen v případě, že jste zvolili uživatelskou roli <strong>kosmetolog</strong> nebo <strong>lékař</strong>.', self::SLUG ) ?>
-</p></noscript>
-<?php
+        ob_start( function() {} );
+        include_once( dirname( __FILE__ ) . '/html/reg_form_2.phtml' );
+        echo ob_get_flush();
     }
 
     /**
