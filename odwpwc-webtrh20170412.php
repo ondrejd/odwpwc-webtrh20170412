@@ -99,10 +99,34 @@ class odwpcp_webtrh20170412 {
         register_uninstall_hook( __FILE__, [__CLASS__, 'uninstall'] );
         add_action( 'init', [__CLASS__, 'load_plugin_textdomain'] );
         add_action( 'plugins_loaded', [__CLASS__, 'load_plugin'] );
+        add_action( 'wp_enqueue_scripts', [__CLASS__, 'enqueue_scripts'] );
     }
 
     /**
-     * Initialize localization (attached to "init" action).
+     * Enqueues required JavaScript files.
+     * @return void
+     * @todo Used page's slug should be taken from WooCommerce's option!!!
+     * @todo Implement maximum allowed file size as a plugin's option.
+     * @todo Implement allowed file extensions as a plugin's option.
+     * @todo Print errors directly inside the form not as an alerts!
+     */
+    public static function enqueue_scripts() {
+        if ( is_page( 'muj-ucet' ) ) {
+            wp_enqueue_script( self::SLUG, plugins_url( 'js/public.js', __FILE__ ), ['jquery'] );
+            wp_localize_script( self::SLUG, 'odwpwcw20170412', [
+                'ROLE_CUSTOMER' => self::ROLE_CUSTOMER,
+                'msg1'          => __( 'Nevložili jste soubor s licencí!', self::SLUG ),
+                'msg2'          => __( 'Soubor je špatného typu nebo je příliš veliký!', self::SLUG ),
+                'file_size'     => 5242830,
+                'allowed_ext'   => 'jpg',
+            ] );
+
+            wp_enqueue_style( self::SLUG, plugins_url( 'css/public.css', __FILE__ ) );
+        }
+    }
+
+    /**
+     * Initializes localization (attached to "init" action).
      * @return void
      * @uses load_plugin_textdomain()
      */
@@ -126,6 +150,7 @@ class odwpcp_webtrh20170412 {
     /**
      * Hook for "woocommerce_created_customer" action.
      * @param int $customer_id
+     * @return void
      */
     public static function wc_created_customer( $customer_id ) {
         //...
@@ -133,6 +158,7 @@ class odwpcp_webtrh20170412 {
 
     /**
      * Customize WooCommerce registration form from the begining.
+     * @return void
      */
     public static function wc_register_form_start() {
         $role  = filter_input( INPUT_POST, 'user_role' );
@@ -146,6 +172,7 @@ class odwpcp_webtrh20170412 {
 
     /**
      * Customize WooCommerce registration form.
+     * @return void
      */
     public static function wc_register_form() {
         ob_start( function() {} );
@@ -155,46 +182,12 @@ class odwpcp_webtrh20170412 {
 
     /**
      * Customize WooCommerce registration form at the end.
-     * @todo Implement maximum allowed file size as a plugin's option.
-     * @todo Implement allowed file extensions as a plugin's option.
-     * @todo Print errors directly inside the form not as an alerts!
-     * @todo Move JavaScript to an external file!
+     * @return void
      */
     public static function wc_register_form_end() {
-?>
-<script type="text/javascript">
-jQuery( document ).ready( function(){
-    function toggle_license() {
-        if ( jQuery( "#reg_user_role" ).val() != "<?= self::ROLE_CUSTOMER ?>" ) {
-            jQuery( ".reg-license-row" ).show();
-        } else {
-            jQuery( ".reg-license-row" ).hide();
-        }
-    }
-
-    jQuery( "#reg_user_role" ).change( toggle_license );
-    toggle_license();
-
-    // Pre-validate file before uploading
-    jQuery( "form" ).submit( function( e ) {
-        if ( jQuery( "#reg_user_role" ).val() == "<?= self::ROLE_CUSTOMER ?>" ) {
-            return true;
-        }
-        var file = jQuery( "#reg_license" ).val();
-        if ( file.empty() || ! file ) {
-            alert( "<?php _e( 'Nevložili jste soubor s licencí!', self::SLUG ) ?>" );
-        }
-        var ext = file.split( "." ).pop().toLowerCase();
-        if ( ! ( jQuery( "#reg_license" )[0].files[0].size < 5242830 && ext == "jpg")) {
-            // Prevent default and display error
-            alert( "<?php _e( 'Soubor je špatného typu nebo je příliš veliký!', self::SLUG ) ?>" );
-            e.preventDefault();
-        }
-        jQuery( "#license" ).val( file );
-    } );
-} );
-</script>
-<?php
+        ob_start( function() {} );
+        include_once( dirname( __FILE__ ) . '/html/reg_form_3.phtml' );
+        echo ob_get_flush();
     }
 
     /**
