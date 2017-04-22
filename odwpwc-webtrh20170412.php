@@ -18,11 +18,10 @@
  * @license https://www.gnu.org/licenses/gpl-3.0.en.html GNU General Public License 3.0
  * @package odwpwc-webtrh20170412
  *
- * @todo Finish customizations for WooCommerce registration form.
  * @todo Enable uploading files.
  * @todo Send registration email also to selected administrators.
  * @todo If license is attached to the user than it should be send to the administrator in the email.
- * @todo Add user preferences.
+ * @todo Add options for the plugin.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -153,7 +152,32 @@ class odwpcp_webtrh20170412 {
      * @return void
      */
     public static function wc_created_customer( $customer_id ) {
-        //...
+        $user_role  = sanitize_text_field( filter_input( INPUT_POST, 'user_role' ) );
+        $first_name = sanitize_text_field( filter_input( INPUT_POST, 'first_name' ) );
+        $last_name  = sanitize_text_field( filter_input( INPUT_POST, 'last_name' ) );
+        $license    = sanitize_text_field( filter_input( INPUT_POST, 'license' ) );
+
+        if ( empty( $user_role ) ) {
+            $user_role = self::ROLE_CUSTOMER;
+        }
+
+        update_user_meta( $customer_id, 'user_role', $user_role );
+
+        if ( ! empty( $first_name ) ) {
+            update_user_meta( $customer_id, 'first_name', $first_name );
+            // First name field which is used in WooCommerce
+            update_user_meta( $customer_id, 'billing_first_name', $first_name );
+        }
+
+        if ( ! empty ( $last_name ) ) {
+            update_user_meta( $customer_id, 'last_name', $last_name );
+            // Last name field which is used in WooCommerce
+            update_user_meta( $customer_id, 'billing_last_name', $last_name );
+        }
+
+        if ( ! empty( $license ) ) {
+            update_user_meta( $customer_id, 'license', $license );
+        }
     }
 
     /**
@@ -161,9 +185,9 @@ class odwpcp_webtrh20170412 {
      * @return void
      */
     public static function wc_register_form_start() {
-        $role  = filter_input( INPUT_POST, 'user_role' );
-        $fname = filter_input( INPUT_POST, 'billing_first_name' );
-        $lname = filter_input( INPUT_POST, 'billing_last_name' );
+        $user_role  = filter_input( INPUT_POST, 'user_role' );
+        $first_name = filter_input( INPUT_POST, 'billing_first_name' );
+        $last_name  = filter_input( INPUT_POST, 'billing_last_name' );
 
         ob_start( function() {} );
         include_once( dirname( __FILE__ ) . '/html/reg_form_1.phtml' );
