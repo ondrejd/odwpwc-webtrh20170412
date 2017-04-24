@@ -96,13 +96,111 @@ class odwpcp_webtrh20170412 {
     public static function init() {
         register_activation_hook( __FILE__, [__CLASS__, 'activate'] );
         register_uninstall_hook( __FILE__, [__CLASS__, 'uninstall'] );
-        add_action( 'init', [__CLASS__, 'load_plugin_textdomain'] );
-        add_action( 'plugins_loaded', [__CLASS__, 'load_plugin'] );
+        add_action( 'init', [__CLASS__, 'init'] );
+        add_action( 'admin_init', [__CLASS__, 'admin_init'] );
+        add_action( 'admin_menu', [__CLASS__, 'admin_menu'] );
+        add_action( 'plugins_loaded', [__CLASS__, 'plugins_loaded'] );
         add_action( 'wp_enqueue_scripts', [__CLASS__, 'enqueue_scripts'] );
     }
 
     /**
-     * Enqueues required JavaScript files.
+     * Hook for "init" action.
+     * @return void
+     */
+    public static function init() {
+        $path = dirname( __FILE__ ) . '/languages';
+        load_plugin_textdomain( self::SLUG, false, $path );
+    }
+
+    /**
+     * Hook for "admin_init" action.
+     * @return void
+     */
+    public static function admin_init() {
+        register_setting( self::SLUG, 'odwpwcw_settings' );
+
+        add_settings_section(
+            'odwpwcw_settings_section_1', 
+            __( 'Your section description', 'odwpwc-webtrh20170412' ), 
+            'odwpwcw_settings_section_callback', 
+            self::SLUG
+        );
+
+        add_settings_field(
+            'max_file_size',
+            __( 'Settings field description', self::SLUG ),
+            [__CLASS__, 'render_setting_max_file_size'],
+            self::SLUG,
+            'odwpwcw_settings_section_1'
+        );
+
+        add_settings_field(
+            'allowed_extensions',
+            __( 'Settings field description', self::SLUG ),
+            [__CLASS__, 'render_setting_allowed_extensions'],
+            self::SLUG,
+            'odwpwcw_settings_section_1'
+        );
+    }
+
+    /**
+     * Hook for "admin_menu" action.
+     * @return void
+     */
+    public static function admin_menu() {
+        add_options_page(
+                __( 'Nastavení pro plugin Úpravy WooCommerce', self::SLUG ),
+                __( 'Úpravy WooCommerce', self::SLUG ),
+                'manage_options',
+                self::SLUG,
+                [__CLASS__, 'admin_options_page']
+            );
+    }
+
+    public static function render_setting_max_file_size() {
+    	$options = get_option( 'odwpwcw_settings' );
+?>
+	<input type="text" name="odwpwcw_settings[max_file_size]" value="<?= $options['odwpwcw_text_field_0'] ?>">
+<?php
+    }
+
+    public static function render_setting_allowed_extensions() {
+    	$options = get_option( 'odwpwcw_settings' );
+?>
+	<input type="text" name="odwpwcw_settings[allowed_extensions]" value="<?= $options['allowed_extensions'] ?>">
+<?php
+    }
+
+    /**
+     * Renders plugin's options page.
+     * @return void
+     */
+    public static function odwpwcw_options_page() { 
+?>
+<form action="options.php" method="post">
+    <h2><?php _e( 'Nastavení pro plugin Úpravy WooCommerce', self::SLUG ) ?></h2>
+<?php
+    settings_fields( self::SLUG );
+    do_settings_sections( self::SLUG );
+    submit_button();
+?>
+</form>
+<?php
+    }
+
+    /**
+     * Hook for "plugins_loaded" action.
+     * @return void
+     */
+    public static function plugins_loaded() {
+        add_action( 'woocommerce_register_form_start', [__CLASS__, 'wc_register_form_start'] );
+        add_action( 'woocommerce_register_form', [__CLASS__, 'wc_register_form'] );
+        add_action( 'woocommerce_register_form_end', [__CLASS__, 'wc_register_form_end'] );
+        add_action( 'woocommerce_register_post', [__CLASS__, 'wc_validate_register_form'], 10, 3 );
+        add_action( 'woocommerce_created_customer', [__CLASS__, 'wc_created_customer'] );
+    }
+    /**
+     * Hook for "wp_enqueue_scripts" action.
      * @return void
      * @todo Used page's slug should be taken from WooCommerce's option!!!
      * @todo Implement maximum allowed file size as a plugin's option.
@@ -122,28 +220,6 @@ class odwpcp_webtrh20170412 {
 
             wp_enqueue_style( self::SLUG, plugins_url( 'css/public.css', __FILE__ ) );
         }
-    }
-
-    /**
-     * Initializes localization (attached to "init" action).
-     * @return void
-     * @uses load_plugin_textdomain()
-     */
-    public static function load_plugin_textdomain() {
-        $path = dirname( __FILE__ ) . '/languages';
-        load_plugin_textdomain( self::SLUG, false, $path );
-    }
-
-    /**
-     * Loads plugin (attached to "plugins_loaded" action).
-     * @return void
-     */
-    public static function load_plugin() {
-        add_action( 'woocommerce_register_form_start', [__CLASS__, 'wc_register_form_start'] );
-        add_action( 'woocommerce_register_form', [__CLASS__, 'wc_register_form'] );
-        add_action( 'woocommerce_register_form_end', [__CLASS__, 'wc_register_form_end'] );
-        add_action( 'woocommerce_register_post', [__CLASS__, 'wc_validate_register_form'], 10, 3 );
-        add_action( 'woocommerce_created_customer', [__CLASS__, 'wc_created_customer'] );
     }
 
     /**
@@ -185,10 +261,6 @@ class odwpcp_webtrh20170412 {
      * @return void
      */
     public static function wc_register_form_start() {
-        $user_role  = filter_input( INPUT_POST, 'user_role' );
-        $first_name = filter_input( INPUT_POST, 'billing_first_name' );
-        $last_name  = filter_input( INPUT_POST, 'billing_last_name' );
-
         ob_start( function() {} );
         include_once( dirname( __FILE__ ) . '/html/reg_form_1.phtml' );
         echo ob_get_flush();

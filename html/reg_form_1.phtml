@@ -1,4 +1,9 @@
-<p class="woocomerce-form-row woocomerce-form-row--wide form-row form-row-wide">
+<?php
+$user_role  = filter_input( INPUT_POST, 'user_role' );
+$first_name = filter_input( INPUT_POST, 'billing_first_name' );
+$last_name  = filter_input( INPUT_POST, 'billing_last_name' );
+
+?><p class="woocomerce-form-row woocomerce-form-row--wide form-row form-row-wide">
     <label for="reg_user_role"><?php _e( 'Uživatelská role', odwpcp_webtrh20170412::SLUG ) ?><span class="required">*</span></label>
     <select name="user_role" id="reg_user_role">
         <option value="<?= odwpcp_webtrh20170412::ROLE_CUSTOMER ?>" <?php selected( $user_role, odwpcp_webtrh20170412::ROLE_CUSTOMER ) ?>><?php _e( 'Zákazník', odwpcp_webtrh20170412::SLUG ) ?></option>
