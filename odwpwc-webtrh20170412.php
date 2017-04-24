@@ -96,7 +96,7 @@ class odwpcp_webtrh20170412 {
     public static function init() {
         register_activation_hook( __FILE__, [__CLASS__, 'activate'] );
         register_uninstall_hook( __FILE__, [__CLASS__, 'uninstall'] );
-        add_action( 'init', [__CLASS__, 'init'] );
+        add_action( 'init', [__CLASS__, 'init_textdomain'] );
         add_action( 'admin_init', [__CLASS__, 'admin_init'] );
         add_action( 'admin_menu', [__CLASS__, 'admin_menu'] );
         add_action( 'plugins_loaded', [__CLASS__, 'plugins_loaded'] );
@@ -107,7 +107,7 @@ class odwpcp_webtrh20170412 {
      * Hook for "init" action.
      * @return void
      */
-    public static function init() {
+    public static function init_textdomain() {
         $path = dirname( __FILE__ ) . '/languages';
         load_plugin_textdomain( self::SLUG, false, $path );
     }
