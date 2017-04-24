@@ -120,26 +120,34 @@ class odwpcp_webtrh20170412 {
         register_setting( self::SLUG, 'odwpwcw_settings' );
 
         add_settings_section(
-            'odwpwcw_settings_section_1', 
-            __( 'Your section description', 'odwpwc-webtrh20170412' ), 
-            'odwpwcw_settings_section_callback', 
-            self::SLUG
+                'odwpwcw_settings_section_1',
+                __( 'Soubory s licencí pro lékaře a kosmetology', 'odwpwc-webtrh20170412' ),
+                'odwpwcw_settings_section_callback',
+                self::SLUG
         );
 
         add_settings_field(
-            'max_file_size',
-            __( 'Settings field description', self::SLUG ),
-            [__CLASS__, 'render_setting_max_file_size'],
-            self::SLUG,
-            'odwpwcw_settings_section_1'
+                'upload_dir',
+                __( 'Adresáře pro upload', self::SLUG ),
+                [__CLASS__, 'render_setting_upload_dir'],
+                self::SLUG,
+                'odwpwcw_settings_section_1'
         );
 
         add_settings_field(
-            'allowed_extensions',
-            __( 'Settings field description', self::SLUG ),
-            [__CLASS__, 'render_setting_allowed_extensions'],
-            self::SLUG,
-            'odwpwcw_settings_section_1'
+                'max_file_size',
+                __( 'Maximální velikost souboru', self::SLUG ),
+                [__CLASS__, 'render_setting_max_file_size'],
+                self::SLUG,
+                'odwpwcw_settings_section_1'
+        );
+
+        add_settings_field(
+                'allowed_extensions',
+                __( 'Povolené typy souboru', self::SLUG ),
+                [__CLASS__, 'render_setting_allowed_extensions'],
+                self::SLUG,
+                'odwpwcw_settings_section_1'
         );
     }
 
@@ -157,34 +165,72 @@ class odwpcp_webtrh20170412 {
             );
     }
 
-    public static function render_setting_max_file_size() {
-    	$options = get_option( 'odwpwcw_settings' );
-?>
-	<input type="text" name="odwpwcw_settings[max_file_size]" value="<?= $options['odwpwcw_text_field_0'] ?>">
-<?php
-    }
-
-    public static function render_setting_allowed_extensions() {
-    	$options = get_option( 'odwpwcw_settings' );
-?>
-	<input type="text" name="odwpwcw_settings[allowed_extensions]" value="<?= $options['allowed_extensions'] ?>">
-<?php
-    }
-
     /**
      * Renders plugin's options page.
      * @return void
      */
-    public static function odwpwcw_options_page() { 
+    public static function admin_options_page() { 
 ?>
 <form action="options.php" method="post">
     <h2><?php _e( 'Nastavení pro plugin Úpravy WooCommerce', self::SLUG ) ?></h2>
 <?php
-    settings_fields( self::SLUG );
-    do_settings_sections( self::SLUG );
-    submit_button();
+        settings_fields( self::SLUG );
+        do_settings_sections( self::SLUG );
+        submit_button();
 ?>
 </form>
+<?php
+    }
+
+    /**
+     * @return integer
+     * @todo Get max allowed size for uploads from PHP settings.
+     */
+    public static function get_max_upload_size() {
+        return 5242830;
+    }
+
+    /**
+     * Renders input for "upload_dir" setting.
+     */
+    public static function render_setting_upload_dir() {
+        $options = get_option( 'odwpwcw_settings' );
+?>
+<input type="text" name="odwpwcw_settings[upload_dir]" value="<?= $options['upload_dir'] ?>" class="normal">
+<p class="description">
+    <?php printf(
+            __( 'Zadejte název pro adresář, do kterého se budou nahrávat licence. Adresář bude uvnitř <code>%s</code>.', self::SLUG ),
+            str_replace( get_home_url( '/' ), '', wp_upload_dir()['baseurl'] )
+    ) ?>
+</p>
+<?php
+    }
+
+    /**
+     * Renders input for "max_file_size" setting.
+     */
+    public static function render_setting_max_file_size() {
+    	$options  = get_option( 'odwpwcw_settings' );
+        $max_size = self::get_max_upload_size();
+?>
+<input type="number" name="odwpwcw_settings[max_file_size]" value="<?= $options['max_file_size'] ?>" min="0" max="<?= $max_size ?>"> 
+<span class="value"><?php _e( 'B', self::SLUG ) ?></span>
+<p class="description">
+    <?php printf(
+            __( 'Zadejte maximální velikost pro nahrané licence (do velikosti <strong>%s</strong>).', self::SLUG ),
+            size_format( $max_size )
+    ) ?>
+</p>
+<?php
+    }
+
+    /**
+     * Renders input for "allowed_extensions" setting.
+     */
+    public static function render_setting_allowed_extensions() {
+    	$options = get_option( 'odwpwcw_settings' );
+?>
+<input type="text" name="odwpwcw_settings[allowed_extensions]" value="<?= $options['allowed_extensions'] ?>">
 <?php
     }
 
@@ -214,7 +260,7 @@ class odwpcp_webtrh20170412 {
                 'ROLE_CUSTOMER' => self::ROLE_CUSTOMER,
                 'msg1'          => __( 'Nevložili jste soubor s licencí!', self::SLUG ),
                 'msg2'          => __( 'Soubor je špatného typu nebo je příliš veliký!', self::SLUG ),
-                'file_size'     => 5242830,
+                'file_size'     => self::get_max_upload_size(),
                 'allowed_ext'   => 'jpg',
             ] );
 
@@ -295,19 +341,19 @@ class odwpcp_webtrh20170412 {
      */
     public static function wc_validate_register_form( $username, $email, WP_Error $errors ) {
         $user_role  = filter_input( INPUT_POST, 'user_role' );
-        $first_name = filter_input( INPUT_POST, 'billing_first_name' );
-        $last_name  = filter_input( INPUT_POST, 'billing_last_name' );
+        $first_name = filter_input( INPUT_POST, 'first_name' );
+        $last_name  = filter_input( INPUT_POST, 'last_name' );
 
         if ( ! in_array( $user_role, self::AVAILABLE_ROLES ) ) {
             $errors->add( 'user_role_error', __( 'Musíte si zvolit odpovídající uživatelskou roli!.', self::SLUG ) );
         }
 
         if ( empty( $first_name ) ) {
-            $errors->add( 'billing_first_name_error', __( 'Křestní jméno je povinné!', self::SLUG ) );
+            $errors->add( 'first_name_error', __( 'Křestní jméno je povinné!', self::SLUG ) );
         }
 
         if ( empty( $last_name ) ) {
-            $errors->add( 'billing_last_name_error', __( 'Příjmení je povinné!.', self::SLUG ) );
+            $errors->add( 'last_name_error', __( 'Příjmení je povinné!.', self::SLUG ) );
         }
 
         // TODO Check if "license" is uploaded and it is JPG (max. 5MB).
