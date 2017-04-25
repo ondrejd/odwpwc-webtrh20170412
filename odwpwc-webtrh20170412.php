@@ -65,6 +65,11 @@ class odwpcp_webtrh20170412 {
     ];
 
     /**
+     * @const string.
+     */
+    const SETTINGS_KEY = 'odwpwcw_settings';
+
+    /**
      * Activates the plugin.
      * @return void
      */
@@ -90,6 +95,57 @@ class odwpcp_webtrh20170412 {
     }
 
     /**
+     * @return array Default values for settings of the plugin.
+     */
+    public static function get_default_options() {
+        return [
+            'upload_dir'         => __( 'licence', self::SLUG ),
+            'max_file_size'      => self::get_max_upload_size(),
+            'allowed_extensions' => 'jpg,jpeg'
+        ];
+    }
+
+    /**
+     * @return array Settings of the plugin.
+     */
+    public static function get_options() {
+        $defaults = self::get_default_options();
+        $options = get_option( self::SETTINGS_KEY, [] );
+        $update = false;
+
+        // Fill defaults for the options that are not set yet
+        foreach( $defaults as $key => $val ) {
+            if( ! array_key_exists( $key, $options ) ) {
+                $options[$key] = $val;
+                $update = true;
+            }
+        }
+
+        // Updates options if needed
+        if( $update === true) {
+            update_option( self::SETTINGS_KEY, $options );
+        }
+
+        return $options;
+    }
+
+    /**
+     * Returns value of option with given key.
+     * @param string $key Option's key.
+     * @return mixed Option's value.
+     * @throws Exception Whenever option with given key doesn't exist.
+     */
+    public static function get_option( $key ) {
+        $options = self::get_options();
+
+        if( ! array_key_exists( $key, $options ) ) {
+            throw new Exception( 'Option "'.$key.'" is not set!' );
+        }
+
+        return $options[$key];
+    }
+
+    /**
      * Initializes the plugin.
      * @return void
      */
@@ -101,6 +157,7 @@ class odwpcp_webtrh20170412 {
         add_action( 'admin_menu', [__CLASS__, 'admin_menu'] );
         add_action( 'plugins_loaded', [__CLASS__, 'plugins_loaded'] );
         add_action( 'wp_enqueue_scripts', [__CLASS__, 'enqueue_scripts'] );
+        add_action( 'admin_enqueue_scripts', [__CLASS__, 'admin_enqueue_scripts'] );
     }
 
     /**
@@ -117,10 +174,11 @@ class odwpcp_webtrh20170412 {
      * @return void
      */
     public static function admin_init() {
-        register_setting( self::SLUG, 'odwpwcw_settings' );
+        register_setting( self::SLUG, self::SETTINGS_KEY );
 
+        $section1 = self::SETTINGS_KEY . '_section_1';
         add_settings_section(
-                'odwpwcw_settings_section_1',
+                $section1,
                 __( 'Soubory s licencí pro lékaře a kosmetology', 'odwpwc-webtrh20170412' ),
                 'odwpwcw_settings_section_callback',
                 self::SLUG
@@ -128,10 +186,10 @@ class odwpcp_webtrh20170412 {
 
         add_settings_field(
                 'upload_dir',
-                __( 'Adresáře pro upload', self::SLUG ),
+                __( 'Název složky pro upload', self::SLUG ),
                 [__CLASS__, 'render_setting_upload_dir'],
                 self::SLUG,
-                'odwpwcw_settings_section_1'
+                $section1
         );
 
         add_settings_field(
@@ -139,15 +197,15 @@ class odwpcp_webtrh20170412 {
                 __( 'Maximální velikost souboru', self::SLUG ),
                 [__CLASS__, 'render_setting_max_file_size'],
                 self::SLUG,
-                'odwpwcw_settings_section_1'
+                $section1
         );
 
         add_settings_field(
                 'allowed_extensions',
-                __( 'Povolené typy souboru', self::SLUG ),
+                __( 'Povolené typy souborů', self::SLUG ),
                 [__CLASS__, 'render_setting_allowed_extensions'],
                 self::SLUG,
-                'odwpwcw_settings_section_1'
+                $section1
         );
     }
 
@@ -163,6 +221,22 @@ class odwpcp_webtrh20170412 {
                 self::SLUG,
                 [__CLASS__, 'admin_options_page']
             );
+    }
+
+    /**
+     * Hook for "admin_enqueue_scripts" action.
+     * @param string $hook
+     * @return void
+     */
+    public static function admin_enqueue_scripts( $hook ) {
+        if( $page == 'settings_page_odwpwc-webtrh20170412' ) {
+            wp_enqueue_script( self::SLUG, plugins_url( 'js/admin.js', __FILE__ ), ['jquery'] );
+            wp_localize_script( self::SLUG, 'odwpwcw20170412', [
+                //...
+            ] );
+
+            wp_enqueue_style( self::SLUG, plugins_url( 'css/admin.css', __FILE__ ) );
+        }
     }
 
     /**
@@ -183,23 +257,28 @@ class odwpcp_webtrh20170412 {
     }
 
     /**
-     * @return integer
-     * @todo Get max allowed size for uploads from PHP settings.
+     * Renders settings section 1.
+     * @return void
      */
-    public static function get_max_upload_size() {
-        return 5242830;
+    public static function render_settings_section_1() {
+?>
+<p class="description">
+    <?php _e( '...', self::SLUG ) ?>
+</p>
+<?php
     }
 
     /**
      * Renders input for "upload_dir" setting.
+     * @return void
      */
     public static function render_setting_upload_dir() {
-        $options = get_option( 'odwpwcw_settings' );
+        $options = self::get_options();
 ?>
 <input type="text" name="odwpwcw_settings[upload_dir]" value="<?= $options['upload_dir'] ?>" class="normal">
 <p class="description">
     <?php printf(
-            __( 'Zadejte název pro adresář, do kterého se budou nahrávat licence. Adresář bude uvnitř <code>%s</code>.', self::SLUG ),
+            __( 'Zadejte název pro služku, do které se budou nahrávat licence. Tato složka bude umístěna uvnitř hlavní složky pro nahrané soubory (tzn. <code>%s</code>).', self::SLUG ),
             str_replace( get_home_url( '/' ), '', wp_upload_dir()['baseurl'] )
     ) ?>
 </p>
@@ -208,17 +287,29 @@ class odwpcp_webtrh20170412 {
 
     /**
      * Renders input for "max_file_size" setting.
+     * @return void
      */
     public static function render_setting_max_file_size() {
-    	$options  = get_option( 'odwpwcw_settings' );
+    	$options = self::get_options();
         $max_size = self::get_max_upload_size();
 ?>
-<input type="number" name="odwpwcw_settings[max_file_size]" value="<?= $options['max_file_size'] ?>" min="0" max="<?= $max_size ?>"> 
-<span class="value"><?php _e( 'B', self::SLUG ) ?></span>
+<p>
+    <?php _e( 'Zadejte velikost v bajtech ', self::SLUG ) ?>
+    <input type="number" name="odwpwcw_settings[max_file_size]" value="<?= $options['max_file_size'] ?>" min="0" max="<?= $max_size ?>">&nbsp;
+    <span><?php _e( ' nebo vyberte jednu z těchto možností ', self::SLUG ) ?></span>&nbsp;
+    <button class="button"><?php _e( '1 MB', self::SLUG ) ?></button>
+    <span><?php _e( ', ', self::SLUG ) ?></span>
+    <button class="button"><?php _e( '3 MB', self::SLUG ) ?></button>
+    <span><?php _e( ', ', self::SLUG ) ?></span>
+    <button class="button"><?php _e( '5 MB', self::SLUG ) ?></button>
+    <span><?php _e( ' nebo ', self::SLUG ) ?></span>
+    <button class="button"><?php _e( 'maximální', self::SLUG ) ?></button>
+    <span><?php _e( '.', self::SLUG ) ?></span>
+</p>
 <p class="description">
     <?php printf(
-            __( 'Zadejte maximální velikost pro nahrané licence (do velikosti <strong>%s</strong>).', self::SLUG ),
-            size_format( $max_size )
+            __( 'Zvolte maximální velikost pro soubory s nahranými licencemi. Defaultní hodnota je maximální možná velikost pro nahrávané soubory stanovená nastavením serveru a PHP (na tomto serveru to je <strong>%s</strong>).', self::SLUG ),
+            size_format( $max_size, 2 )
     ) ?>
 </p>
 <?php
@@ -226,11 +317,31 @@ class odwpcp_webtrh20170412 {
 
     /**
      * Renders input for "allowed_extensions" setting.
+     * @return void
      */
     public static function render_setting_allowed_extensions() {
-    	$options = get_option( 'odwpwcw_settings' );
+    	$options = self::get_options();
 ?>
-<input type="text" name="odwpwcw_settings[allowed_extensions]" value="<?= $options['allowed_extensions'] ?>">
+<p>
+    <?php _e( 'Zadejte přípony ', self::SLUG ) ?>
+    <input type="text" name="odwpwcw_settings[allowed_extensions]" value="<?= $options['allowed_extensions'] ?>">&nbsp;
+    <span><?php _e( ' nebo vyberte některé z těchto možností ', self::SLUG ) ?></span>&nbsp;
+    <button class="button"><?php _e( 'JPG', self::SLUG ) ?></button>
+    <span><?php _e( ', ', self::SLUG ) ?></span>
+    <button class="button"><?php _e( 'GIF', self::SLUG ) ?></button>
+    <span><?php _e( ', ', self::SLUG ) ?></span>
+    <button class="button"><?php _e( 'PNG', self::SLUG ) ?></button>
+    <span><?php _e( ', ', self::SLUG ) ?></span>
+    <button class="button"><?php _e( 'BMP', self::SLUG ) ?></button>
+    <span><?php _e( ', ', self::SLUG ) ?></span>
+    <button class="button"><?php _e( 'WebP', self::SLUG ) ?></button>
+    <span><?php _e( ' nebo ', self::SLUG ) ?></span>
+    <button class="button"><?php _e( 'všechny', self::SLUG ) ?></button>
+    <span><?php _e( '.', self::SLUG ) ?></span>
+</p>
+<p class="description">
+    <?php _e( 'Zadejte přípony typů podporovaných obrázků oddělené pro soubory s licencí nebo je vyberte pomocí tlačítek. Jednotlivé typy oddělujte čárkou (např. <code>jpg,gif,png</code>, v nejjednodušším případě jen <code>jpg</code> atp.).', self::SLUG ) ?>
+</p>
 <?php
     }
 
@@ -260,8 +371,8 @@ class odwpcp_webtrh20170412 {
                 'ROLE_CUSTOMER' => self::ROLE_CUSTOMER,
                 'msg1'          => __( 'Nevložili jste soubor s licencí!', self::SLUG ),
                 'msg2'          => __( 'Soubor je špatného typu nebo je příliš veliký!', self::SLUG ),
-                'file_size'     => self::get_max_upload_size(),
-                'allowed_ext'   => 'jpg',
+                'file_size'     => self::get_option( 'max_file_size' ),
+                'allowed_ext'   => self::get_option( 'allowed_extensions' ),
             ] );
 
             wp_enqueue_style( self::SLUG, plugins_url( 'css/public.css', __FILE__ ) );
@@ -428,10 +539,54 @@ class odwpcp_webtrh20170412 {
      * @param string $type (Optional.) One of ['info','updated','error'].
      * @return void
      */
-    private static function print_error( $msg, $type = 'info' ) {
+    protected static function print_error( $msg, $type = 'info' ) {
         $avail_types = ['error', 'info', 'updated'];
         $_type = in_array( $type, $avail_types ) ? $type : 'info';
         printf( '<div class="%s"><p>%s</p></div>', $_type, $msg );
+    }
+
+    /**
+     * @internal Returns a file size limit in bytes based on the PHP settings.
+     * @link http://stackoverflow.com/questions/13076480/php-get-actual-maximum-upload-size
+     * @return int
+     */
+    protected static function get_max_upload_size() {
+        static $max_size = -1;
+
+        if( $max_size < 0 ) {
+            // Start with post_max_size.
+            $max_size = self::parse_size( ini_get( 'post_max_size' ) );
+
+            // If upload_max_size is less, then reduce. Except if upload_max_size is
+            // zero, which indicates no limit.
+            $upload_max = self::parse_size( ini_get( 'upload_max_filesize' ) );
+            if( $upload_max > 0 && $upload_max < $max_size ) {
+                $max_size = $upload_max;
+            }
+        }
+
+        return $max_size;
+    }
+
+    /**
+     * @internal Parses file size string from PHP settings (e.g. 1M etc.).
+     * @link http://stackoverflow.com/questions/13076480/php-get-actual-maximum-upload-size
+     * @param string $size
+     * @return int
+     */
+    protected static function parse_size( $size ) {
+        // Remove the non-unit characters from the size.
+        $unit = preg_replace( '/[^bkmgtpezy]/i', '', $size );
+        // Remove the non-numeric characters from the size.
+        $size = preg_replace( '/[^0-9\.]/', '', $size );
+
+        if ( $unit ) {
+            // Find the position of the unit in the ordered string which is 
+            // the power of magnitude to multiply a kilobyte by.
+            return round( $size * pow( 1024, stripos( 'bkmgtpezy', $unit[0] ) ) );
+        }
+
+        return round( $size );
     }
 } // End of odwpcp_webtrh20170412
 
