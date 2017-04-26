@@ -229,12 +229,11 @@ class odwpcp_webtrh20170412 {
      * @return void
      */
     public static function admin_enqueue_scripts( $hook ) {
-        if( $page == 'settings_page_odwpwc-webtrh20170412' ) {
+        if( $hook == 'settings_page_odwpwc-webtrh20170412' ) {
             wp_enqueue_script( self::SLUG, plugins_url( 'js/admin.js', __FILE__ ), ['jquery'] );
             wp_localize_script( self::SLUG, 'odwpwcw20170412', [
                 //...
             ] );
-
             wp_enqueue_style( self::SLUG, plugins_url( 'css/admin.css', __FILE__ ) );
         }
     }
@@ -295,15 +294,15 @@ class odwpcp_webtrh20170412 {
 ?>
 <p>
     <?php _e( 'Zadejte velikost v bajtech ', self::SLUG ) ?>
-    <input type="number" name="odwpwcw_settings[max_file_size]" value="<?= $options['max_file_size'] ?>" min="0" max="<?= $max_size ?>">&nbsp;
+    <input type="number" id="max_license_size" name="odwpwcw_settings[max_file_size]" value="<?= $options['max_file_size'] ?>" min="0" max="<?= $max_size ?>">&nbsp;
     <span><?php _e( ' nebo vyberte jednu z těchto možností ', self::SLUG ) ?></span>&nbsp;
-    <button class="button"><?php _e( '1 MB', self::SLUG ) ?></button>
+    <button class="button btn-pick_file_size" data-size="1048576"><?php _e( '1 MB', self::SLUG ) ?></button>
     <span><?php _e( ', ', self::SLUG ) ?></span>
-    <button class="button"><?php _e( '3 MB', self::SLUG ) ?></button>
+    <button class="button btn-pick_file_size" data-size="3145728"><?php _e( '3 MB', self::SLUG ) ?></button>
     <span><?php _e( ', ', self::SLUG ) ?></span>
-    <button class="button"><?php _e( '5 MB', self::SLUG ) ?></button>
+    <button class="button btn-pick_file_size" data-size="5242880"><?php _e( '5 MB', self::SLUG ) ?></button>
     <span><?php _e( ' nebo ', self::SLUG ) ?></span>
-    <button class="button"><?php _e( 'maximální', self::SLUG ) ?></button>
+    <button class="button btn-pick_file_size" data-size="<?= $max_size ?>"><?php _e( 'maximální', self::SLUG ) ?></button>
     <span><?php _e( '.', self::SLUG ) ?></span>
 </p>
 <p class="description">
@@ -324,19 +323,19 @@ class odwpcp_webtrh20170412 {
 ?>
 <p>
     <?php _e( 'Zadejte přípony ', self::SLUG ) ?>
-    <input type="text" name="odwpwcw_settings[allowed_extensions]" value="<?= $options['allowed_extensions'] ?>">&nbsp;
+    <input type="text" id="license_allowed_exts" name="odwpwcw_settings[allowed_extensions]" value="<?= $options['allowed_extensions'] ?>">&nbsp;
     <span><?php _e( ' nebo vyberte některé z těchto možností ', self::SLUG ) ?></span>&nbsp;
-    <button class="button"><?php _e( 'JPG', self::SLUG ) ?></button>
+    <button class="button btn-pick_file_ext" data-ext="jpg"><?php _e( 'JPG', self::SLUG ) ?></button>
     <span><?php _e( ', ', self::SLUG ) ?></span>
-    <button class="button"><?php _e( 'GIF', self::SLUG ) ?></button>
+    <button class="button btn-pick_file_ext" data-ext="gif"><?php _e( 'GIF', self::SLUG ) ?></button>
     <span><?php _e( ', ', self::SLUG ) ?></span>
-    <button class="button"><?php _e( 'PNG', self::SLUG ) ?></button>
+    <button class="button btn-pick_file_ext" data-ext="png"><?php _e( 'PNG', self::SLUG ) ?></button>
     <span><?php _e( ', ', self::SLUG ) ?></span>
-    <button class="button"><?php _e( 'BMP', self::SLUG ) ?></button>
+    <button class="button btn-pick_file_ext" data-ext="bmp"><?php _e( 'BMP', self::SLUG ) ?></button>
     <span><?php _e( ', ', self::SLUG ) ?></span>
-    <button class="button"><?php _e( 'WebP', self::SLUG ) ?></button>
+    <button class="button btn-pick_file_ext" data-ext="webp"><?php _e( 'WebP', self::SLUG ) ?></button>
     <span><?php _e( ' nebo ', self::SLUG ) ?></span>
-    <button class="button"><?php _e( 'všechny', self::SLUG ) ?></button>
+    <button class="button btn-pick_file_ext" data-ext="*"><?php _e( 'všechny', self::SLUG ) ?></button>
     <span><?php _e( '.', self::SLUG ) ?></span>
 </p>
 <p class="description">
