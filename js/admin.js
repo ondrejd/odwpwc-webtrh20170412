@@ -4,6 +4,7 @@ jQuery( document ).ready( function() {
         e.preventDefault();
         jQuery( "#max_license_size" ).val( jQuery( this ).data( "size" ) );
     } );
+
     // Pick allowed extensions for license file
     jQuery( ".btn-pick_file_ext" ).click( function( e ) {
         e.preventDefault();
@@ -11,6 +12,7 @@ jQuery( document ).ready( function() {
 
         if ( ext == "*" ) {
             jQuery( "#license_allowed_exts" ).val( "jpg,gif,png,bmp,webp" );
+            updateAllowedExtsBtns();
             return;
         }
 
@@ -24,5 +26,33 @@ jQuery( document ).ready( function() {
         }
 
         jQuery( "#license_allowed_exts" ).val( vals.join( "," ) );
+        updateAllowedExtsBtns();
     } );
+
+    /**
+     * @param {Array} vals
+     * @param {DOMElement} itm
+     * @returns {void}
+     */
+    function updateBtnCls( vals, itm ) {
+        var idx = vals.indexOf( jQuery( itm ).data( "ext" ) );
+        if( idx >= 0 ) {
+            jQuery( itm ).addClass( "hover" );
+        } else {
+            jQuery( itm ).removeClass( "hover" );
+        }
+    }
+
+    /**
+     * @returns {void}
+     */
+    function updateAllowedExtsBtns() {
+        var vals = jQuery( "#license_allowed_exts" ).val().split( "," );
+        jQuery( ".btn-pick_file_ext" ).each( function( idx, itm ) {
+            updateBtnCls( vals, itm );
+        } );
+    }
+
+    // At the start update buttons classes
+    updateAllowedExtsBtns();
 } );
