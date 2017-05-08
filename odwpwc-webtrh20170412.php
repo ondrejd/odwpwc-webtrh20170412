@@ -180,7 +180,7 @@ class odwpcp_webtrh20170412 {
         add_settings_section(
                 $section1,
                 __( 'Soubory s licencí pro lékaře a kosmetology', 'odwpwc-webtrh20170412' ),
-                'odwpwcw_settings_section_callback',
+                [__CLASS__, 'render_settings_section_1'],
                 self::SLUG
         );
 
